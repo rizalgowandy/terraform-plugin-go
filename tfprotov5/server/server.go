@@ -139,7 +139,7 @@ func (s *server) stoppableContext(ctx context.Context) context.Context {
 // on `ctx`.
 func (s *server) loggingContext(ctx context.Context) context.Context {
 	// set up root SDK logger
-	ctx = tfsdklog.New(ctx)
+	ctx = tfsdklog.New(ctx, tfsdklog.WithStderrFromInit())
 
 	// set up plugin-go-specific logger
 	ctx = tfsdklog.NewSubsystem(ctx, sublogkey, tfsdklog.WithLevelFromEnv("TF_LOG_PROVIDER_SDK_PLUGIN_GO"))
@@ -147,7 +147,7 @@ func (s *server) loggingContext(ctx context.Context) context.Context {
 	// set up provider logger
 	// TODO: let's get the provider name in here somehow and set a default
 	// environment variable, maybe the module name
-	ctx = tflog.New(ctx, tflog.WithLogName("provider"))
+	ctx = tflog.New(ctx, tflog.WithLogName("provider"), tflog.WithStderrFromInit())
 
 	// inject request ID in logs
 	requestID, err := uuid.GenerateUUID()
