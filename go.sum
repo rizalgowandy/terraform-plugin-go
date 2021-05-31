@@ -41,6 +41,8 @@ github.com/hashicorp/go-uuid v1.0.2 h1:cfejS+Tpcp13yd5nYHWDI6qVCny6wyX2Mt5SGur2I
 github.com/hashicorp/go-uuid v1.0.2/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
 github.com/hashicorp/terraform-plugin-log v0.0.0-20210510204640-61157434ac2c h1:BNNQwWQKnnOTy12S8G3AlqxVVfQpREyuSu0p57sEyfQ=
 github.com/hashicorp/terraform-plugin-log v0.0.0-20210510204640-61157434ac2c/go.mod h1:qRu7tRIL3c89jRYT7UBkSJ+DJ8NPPjQGawQgrGms47s=
+github.com/hashicorp/terraform-plugin-log v0.0.0-20210511001735-d9fb2d825c25 h1:uJWm3nIQWif50ehzIKD91uJqvM0HP32d6wSZsT1S50A=
+github.com/hashicorp/terraform-plugin-log v0.0.0-20210511001735-d9fb2d825c25/go.mod h1:qRu7tRIL3c89jRYT7UBkSJ+DJ8NPPjQGawQgrGms47s=
 github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb h1:b5rjCoWHc7eqmAS4/qyk21ZsHyb6Mxv/jykxvNTkU4M=
 github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb/go.mod h1:+NfK9FKeTrX5uv1uIXGdwYDTeHna2qgaIlx54MXqjAM=
 github.com/jhump/protoreflect v1.6.0 h1:h5jfMVslIg6l29nsMs0D8Wj17RDVdNYti0vDN/PZZoE=

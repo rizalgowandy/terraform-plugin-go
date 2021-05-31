@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/go-hclog v0.16.1
 	github.com/hashicorp/go-plugin v1.3.0
 	github.com/hashicorp/go-uuid v1.0.2
-	github.com/hashicorp/terraform-plugin-log v0.0.0-20210510204640-61157434ac2c
+	github.com/hashicorp/terraform-plugin-log v0.0.0-20210511001735-d9fb2d825c25
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/nsf/jsondiff v0.0.0-20200515183724-f29ed568f4ce
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
