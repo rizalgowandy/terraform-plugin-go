@@ -2,6 +2,10 @@ package tf5server
 
 import (
 	"context"
+	"errors"
+	"log"
+	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
@@ -14,6 +18,7 @@ import (
 	"github.com/hashicorp/go-uuid"
 	tflog "github.com/hashicorp/terraform-plugin-log"
 	tfsdklog "github.com/hashicorp/terraform-plugin-log/sdk"
+	tfaddr "github.com/hashicorp/terraform-registry-address"
 )
 
 const tflogSubsystemName = "proto"
@@ -36,6 +41,7 @@ type ServeConfig struct {
 
 	disableLogInitStderr bool
 	disableLogLocation   bool
+	envVar               string
 }
 
 type serveConfigFunc func(*ServeConfig) error
@@ -80,6 +86,21 @@ func WithoutLogStderrOverride() ServeOpt {
 func WithoutLogLocation() ServeOpt {
 	return serveConfigFunc(func(in *ServeConfig) error {
 		in.disableLogLocation = true
+		return nil
+	})
+}
+
+// WithLogEnvVarName sets the name of the provider for the purposes of the
+// logging environment variable that controls the provider's log level. It is
+// the part following TF_LOG_PROVIDER_ and defaults to the name part of the
+// provider's registry address, or disabled if it can't parse the provider's
+// registry address. Name must only contain letters and numbers.
+func WithLogEnvVarName(name string) ServeOpt {
+	return serveConfigFunc(func(in *ServeConfig) error {
+		if !regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString(name) {
+			return errors.New("environment variable names can only contain a-z, A-Z, and 0-9")
+		}
+		in.envVar = name
 		return nil
 	})
 }
@@ -234,6 +255,18 @@ func New(name string, serve tfprotov5.ProviderServer, opts ...ServeOpt) tfplugin
 	if conf.disableLogLocation {
 		sdkOptions = append(sdkOptions, tfsdklog.WithoutLocation())
 		options = append(options, tflog.WithoutLocation())
+	}
+	envVar := conf.envVar
+	if envVar == "" {
+		addr, err := tfaddr.ParseRawProviderSourceString(name)
+		if err != nil {
+			log.Println("[ERROR] Error parsing provider name:", err)
+		} else {
+			envVar = strings.ReplaceAll(addr.Type, "-", "_")
+		}
+	}
+	if envVar != "" {
+		options = append(options, tflog.WithLogName(envVar), tflog.WithLevelFromEnv("TF", "LOG", "PROVIDER", envVar))
 	}
 	return &server{
 		downstream:   serve,
