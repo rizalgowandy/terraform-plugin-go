@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package tftypes
 
 import (
@@ -24,6 +27,10 @@ func TestValueFromMsgPack(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error parsing awkward fraction: %s", err)
 	}
+
+	// integer under 64 bits which rounds incorrectly if parsed as a float64
+	uint64AsFloat, _ := new(big.Float).SetString("9223372036854775808")
+
 	tests := map[string]testCase{
 		"hello-string": {
 			hex:   "a568656c6c6f",
@@ -70,9 +77,35 @@ func TestValueFromMsgPack(t *testing.T) {
 			value: NewValue(Number, big.NewFloat(1)),
 			typ:   Number,
 		},
+		"int64-positive-number": {
+			hex:   "cf7fffffffffffffff",
+			value: NewValue(Number, new(big.Float).SetInt64(math.MaxInt64)),
+			typ:   Number,
+		},
+		"int64-negative-number": {
+			hex:   "d38000000000000000",
+			value: NewValue(Number, new(big.Float).SetInt64(math.MinInt64)),
+			typ:   Number,
+		},
+		"uint64-number": {
+			hex:   "b43138343436373434303733373039353531363135",
+			value: NewValue(Number, new(big.Float).SetUint64(math.MaxUint64)),
+			typ:   Number,
+		},
 		"float-number": {
 			hex:   "cb3ff8000000000000",
 			value: NewValue(Number, big.NewFloat(1.5)),
+			typ:   Number,
+		},
+		"float64-positive-number": {
+			// Because MaxFloat64 is an integer value, it must be encoded as an integer to ensure we don't lose precision when decoding the value
+			hex:   "da0135313739373639333133343836323331353730303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030",
+			value: NewValue(Number, new(big.Float).SetFloat64(math.MaxFloat64)),
+			typ:   Number,
+		},
+		"float64-negative-number": {
+			hex:   "cb0000000000000001",
+			value: NewValue(Number, new(big.Float).SetFloat64(math.SmallestNonzeroFloat64)),
 			typ:   Number,
 		},
 		"big-number": {
@@ -93,6 +126,11 @@ func TestValueFromMsgPack(t *testing.T) {
 		"negative-infinity-number": {
 			hex:   "cbfff0000000000000",
 			value: NewValue(Number, big.NewFloat(math.Inf(-1))),
+			typ:   Number,
+		},
+		"large-uint64": {
+			hex:   "b339323233333732303336383534373735383038",
+			value: NewValue(Number, uint64AsFloat),
 			typ:   Number,
 		},
 		"dynamic-bool": {
@@ -496,7 +534,6 @@ func TestValueFromMsgPack(t *testing.T) {
 		},
 	}
 	for name, test := range tests {
-		name, test := name, test
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			got, err := test.value.MarshalMsgPack(test.typ) //nolint:staticcheck
@@ -517,8 +554,8 @@ func TestValueFromMsgPack(t *testing.T) {
 				t.Fatalf("unexpected error unmarshaling: %s", err)
 			}
 
-			if diff := cmp.Diff(test.value, val); diff != "" {
-				t.Errorf("Unexpected results (-wanted +got): %s", diff)
+			if test.value.String() != val.String() {
+				t.Errorf("Unexpected results (-wanted +got): %s", cmp.Diff(test.value, val))
 			}
 		})
 	}

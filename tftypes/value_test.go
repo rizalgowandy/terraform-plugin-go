@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package tftypes
 
 import (
@@ -428,8 +431,9 @@ func TestValueAs(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		name, test := name, test
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			err := test.in.As(test.as)
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
@@ -704,7 +708,6 @@ func TestValueIsKnown(t *testing.T) {
 		},
 	}
 	for name, test := range tests {
-		name, test := name, test
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			known := test.value.IsKnown()
@@ -738,6 +741,11 @@ func TestValueEqual(t *testing.T) {
 			val2:  NewValue(String, "world"),
 			equal: false,
 		},
+		"stringDiff-wrong-type": {
+			val1:  NewValue(String, "true"),
+			val2:  NewValue(Bool, true),
+			equal: false,
+		},
 		"boolEqual": {
 			val1:  NewValue(Bool, true),
 			val2:  NewValue(Bool, true),
@@ -748,6 +756,11 @@ func TestValueEqual(t *testing.T) {
 			val2:  NewValue(Bool, true),
 			equal: false,
 		},
+		"boolDiff-wrong-type": {
+			val1:  NewValue(Bool, true),
+			val2:  NewValue(String, "true"),
+			equal: false,
+		},
 		"numberEqual": {
 			val1:  NewValue(Number, big.NewFloat(123)),
 			val2:  NewValue(Number, big.NewFloat(0).SetInt64(123)),
@@ -756,6 +769,11 @@ func TestValueEqual(t *testing.T) {
 		"numberDiff": {
 			val1:  NewValue(Number, big.NewFloat(1)),
 			val2:  NewValue(Number, big.NewFloat(2)),
+			equal: false,
+		},
+		"numberDiff-wrong-type": {
+			val1:  NewValue(Number, big.NewFloat(1)),
+			val2:  NewValue(String, "1"),
 			equal: false,
 		},
 		"unknownEqual": {
@@ -806,6 +824,19 @@ func TestValueEqual(t *testing.T) {
 			}),
 			equal: false,
 		},
+		"listDiff-wrong-type": {
+			val1: NewValue(List{ElementType: String}, []Value{
+				NewValue(String, "hello"),
+				NewValue(String, "world"),
+				NewValue(String, "abc"),
+			}),
+			val2: NewValue(Set{ElementType: String}, []Value{
+				NewValue(String, "hello"),
+				NewValue(String, "world"),
+				NewValue(String, "abc"),
+			}),
+			equal: false,
+		},
 		"setEqual": {
 			val1: NewValue(Set{ElementType: String}, []Value{
 				NewValue(String, "hello"),
@@ -840,6 +871,19 @@ func TestValueEqual(t *testing.T) {
 			val2: NewValue(Set{ElementType: String}, []Value{
 				NewValue(String, "hello"),
 				NewValue(String, "world!"),
+				NewValue(String, "abc"),
+			}),
+			equal: false,
+		},
+		"setDiff-wrong-type": {
+			val1: NewValue(Set{ElementType: String}, []Value{
+				NewValue(String, "hello"),
+				NewValue(String, "world"),
+				NewValue(String, "abc"),
+			}),
+			val2: NewValue(List{ElementType: String}, []Value{
+				NewValue(String, "hello"),
+				NewValue(String, "world"),
 				NewValue(String, "abc"),
 			}),
 			equal: false,
@@ -976,6 +1020,17 @@ func TestValueEqual(t *testing.T) {
 			}),
 			equal: false,
 		},
+		"mapDiff-wrong-types": {
+			val1: NewValue(Map{ElementType: String}, map[string]Value{
+				"one": NewValue(String, "true"),
+				"two": NewValue(String, "false"),
+			}),
+			val2: NewValue(Map{ElementType: Bool}, map[string]Value{
+				"one": NewValue(Bool, true),
+				"two": NewValue(Bool, false),
+			}),
+			equal: false,
+		},
 		"objectEqual": {
 			val1: NewValue(Object{AttributeTypes: map[string]Type{
 				"one":   Number,
@@ -1063,6 +1118,68 @@ func TestValueEqual(t *testing.T) {
 			}),
 			equal: false,
 		},
+		"DynamicPseudoType-tupleEqual": {
+			val1: NewValue(Tuple{ElementTypes: []Type{
+				DynamicPseudoType, DynamicPseudoType,
+			}}, []Value{
+				NewValue(Bool, true),
+				NewValue(List{ElementType: String}, []Value{
+					NewValue(String, "a"),
+					NewValue(String, "b"),
+					NewValue(String, "c"),
+				}),
+			}),
+			val2: NewValue(Tuple{ElementTypes: []Type{
+				DynamicPseudoType, DynamicPseudoType,
+			}}, []Value{
+				NewValue(Bool, true),
+				NewValue(List{ElementType: String}, []Value{
+					NewValue(String, "a"),
+					NewValue(String, "b"),
+					NewValue(String, "c"),
+				}),
+			}),
+			equal: true,
+		},
+		// Previously, different value types with a DynamicPseudoType would cause a panic
+		// https://github.com/hashicorp/terraform-plugin-go/pull/383
+		"DynamicPseudoType-tupleDiff-different-value-types": {
+			val1: NewValue(Tuple{ElementTypes: []Type{DynamicPseudoType}}, []Value{
+				NewValue(String, "false"),
+			}),
+			val2: NewValue(Tuple{ElementTypes: []Type{DynamicPseudoType}}, []Value{
+				NewValue(Bool, false), // This value type is different than val1
+			}),
+			equal: false,
+		},
+		"DynamicPseudoType-objectEqual": {
+			val1: NewValue(Object{AttributeTypes: map[string]Type{
+				"dyn_val": DynamicPseudoType,
+			}}, map[string]Value{
+				"dyn_val": NewValue(String, "hello"),
+			}),
+			val2: NewValue(Object{AttributeTypes: map[string]Type{
+				"dyn_val": DynamicPseudoType,
+			}}, map[string]Value{
+				"dyn_val": NewValue(String, "hello"),
+			}),
+			equal: true,
+		},
+		// Previously, different value types with a DynamicPseudoType would cause a panic
+		// https://github.com/hashicorp/terraform-plugin-go/pull/383
+		"DynamicPseudoType-objectDiff-different-value-types": {
+			val1: NewValue(Object{AttributeTypes: map[string]Type{
+				"dyn_val": DynamicPseudoType,
+			}}, map[string]Value{
+				"dyn_val": NewValue(String, "1"),
+			}),
+			val2: NewValue(Object{AttributeTypes: map[string]Type{
+				"dyn_val": DynamicPseudoType,
+			}}, map[string]Value{
+				"dyn_val": NewValue(Number, big.NewFloat(1)), // This value type is different than val1
+			}),
+			equal: false,
+		},
 		"nullEqual": {
 			val1:  NewValue(String, nil),
 			val2:  NewValue(String, nil),
@@ -1084,7 +1201,6 @@ func TestValueEqual(t *testing.T) {
 		},
 	}
 	for name, test := range tests {
-		name, test := name, test
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			if result := test.val1.Equal(test.val2); result != test.equal {
@@ -1466,7 +1582,6 @@ func TestValueApplyTerraform5AttributePathStep(t *testing.T) {
 		},
 	}
 	for name, test := range tests {
-		name, test := name, test
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -1574,7 +1689,6 @@ func TestValueWalkAttributePath(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		name, test := name, test
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			result, remaining, err := WalkAttributePath(test.val, test.path)
@@ -1745,8 +1859,9 @@ func TestValueString(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		name, test := name, test
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			str := test.in.String()
 			if diff := cmp.Diff(test.expected, str); diff != "" {
 				t.Errorf("Unexpected results (-wanted, +got): %s", diff)

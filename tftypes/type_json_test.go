@@ -1,10 +1,27 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package tftypes
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/nsf/jsondiff"
+)
+
+// Reference: https://github.com/google/go-cmp/issues/224
+var cmpTransformJSON = cmp.FilterValues(
+	func(x, y []byte) bool {
+		return json.Valid(x) && json.Valid(y)
+	},
+	cmp.Transformer("ParseJSON", func(in []byte) (out interface{}) {
+		if err := json.Unmarshal(in, &out); err != nil {
+			panic(err) // should never occur given previous filter to ensure valid JSON
+		}
+
+		return out
+	}),
 )
 
 func TestTypeJSON(t *testing.T) {
@@ -42,6 +59,27 @@ func TestTypeJSON(t *testing.T) {
 		"map-string": {
 			json: `["map","string"]`,
 			typ:  Map{ElementType: String},
+		},
+		"object-empty": {
+			json: `["object",{}]`,
+			typ:  Object{AttributeTypes: map[string]Type{}},
+		},
+		"object-string": {
+			json: `["object",{"test":"string"}]`,
+			typ: Object{AttributeTypes: map[string]Type{
+				"test": String,
+			}},
+		},
+		"object-string-optional": {
+			json: `["object",{"test":"string"},["test"]]`,
+			typ: Object{
+				AttributeTypes: map[string]Type{
+					"test": String,
+				},
+				OptionalAttributes: map[string]struct{}{
+					"test": {},
+				},
+			},
 		},
 		"object-string_number_bool": {
 			json: `["object",{"foo":"string","bar":"number","baz":"bool"}]`,
@@ -93,6 +131,16 @@ func TestTypeJSON(t *testing.T) {
 				},
 			},
 		},
+		"tuple-empty": {
+			json: `["tuple",[]]`,
+			typ:  Tuple{ElementTypes: []Type{}},
+		},
+		"tuple-string": {
+			json: `["tuple",["string"]]`,
+			typ: Tuple{ElementTypes: []Type{
+				String,
+			}},
+		},
 		"tuple-string_number_bool": {
 			json: `["tuple",["string","number","bool"]]`,
 			typ: Tuple{ElementTypes: []Type{
@@ -138,10 +186,11 @@ func TestTypeJSON(t *testing.T) {
 			}},
 		},
 	}
-	jsondiffopts := jsondiff.DefaultConsoleOptions()
+
 	for name, test := range testCases {
-		name, test := name, test
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			typ, err := ParseJSONType([]byte(test.json))
 			if err != nil {
 				t.Fatalf("unexpected error parsing JSON: %s", err)
@@ -150,13 +199,13 @@ func TestTypeJSON(t *testing.T) {
 				t.Fatalf("Unexpected parsing results (-wanted +got): %s", cmp.Diff(test.typ, typ))
 			}
 
-			json, err := typ.MarshalJSON()
+			typJSON, err := typ.MarshalJSON()
 			if err != nil {
 				t.Fatalf("unexpected error generating JSON: %s", err)
 			}
-			diff, diffStr := jsondiff.Compare([]byte(test.json), json, &jsondiffopts)
-			if diff != jsondiff.FullMatch {
-				t.Fatalf("unexpected JSON generating results (got => expected): %s", diffStr)
+
+			if diff := cmp.Diff([]byte(test.json), typJSON, cmpTransformJSON); diff != "" {
+				t.Fatalf("unexpected generated JSON difference: %s", diff)
 			}
 		})
 	}

@@ -1,6 +1,10 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package tftypes
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -10,9 +14,10 @@ import (
 func TestValueFromJSON(t *testing.T) {
 	t.Parallel()
 	type testCase struct {
-		value Value
-		typ   Type
-		json  string
+		value         Value
+		typ           Type
+		json          string
+		expectedError error
 	}
 	tests := map[string]testCase{
 		// Primitives
@@ -211,6 +216,30 @@ func TestValueFromJSON(t *testing.T) {
 			},
 			json: `{}`,
 		},
+		"object-attribute-key-token-error": {
+			value: Value{},
+			typ: Object{
+				AttributeTypes: map[string]Type{},
+			},
+			json: `{{}}`,
+			expectedError: AttributePathError{
+				Path: NewAttributePath(),
+				err:  fmt.Errorf("error reading object attribute key token: invalid character '{'"),
+			},
+		},
+		"object-attribute-key-missing-error": {
+			value: Value{},
+			typ: Object{
+				AttributeTypes: map[string]Type{
+					"test": String,
+				},
+			},
+			json: `{"not-test": "test-value"}`,
+			expectedError: AttributePathError{
+				Path: NewAttributePath().WithAttributeName("not-test"),
+				err:  fmt.Errorf("unsupported attribute \"not-test\""),
+			},
+		},
 		"object-of-bool_number": {
 			value: NewValue(Object{
 				AttributeTypes: map[string]Type{
@@ -367,10 +396,70 @@ func TestValueFromJSON(t *testing.T) {
 		},
 	}
 	for name, test := range tests {
-		name, test := name, test
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			val, err := ValueFromJSON([]byte(test.json), test.typ)
+			if diff := cmp.Diff(test.expectedError, err); diff != "" {
+				t.Errorf("unexpected error difference: %s", diff)
+			}
+			if diff := cmp.Diff(test.value, val); diff != "" {
+				t.Errorf("Unexpected results (-wanted +got): %s", diff)
+			}
+		})
+	}
+}
+
+func TestValueFromJSONWithOpts(t *testing.T) {
+	t.Parallel()
+	type testCase struct {
+		value Value
+		typ   Type
+		json  string
+	}
+	tests := map[string]testCase{
+		"object-of-bool-number": {
+			value: NewValue(Object{
+				AttributeTypes: map[string]Type{
+					"bool":   Bool,
+					"number": Number,
+				},
+			}, map[string]Value{
+				"bool":   NewValue(Bool, true),
+				"number": NewValue(Number, big.NewFloat(0)),
+			}),
+			typ: Object{
+				AttributeTypes: map[string]Type{
+					"bool":   Bool,
+					"number": Number,
+				},
+			},
+			json: `{"bool":true,"number":0}`,
+		},
+		"object-with-missing-attribute": {
+			value: NewValue(Object{
+				AttributeTypes: map[string]Type{
+					"bool":   Bool,
+					"number": Number,
+				},
+			}, map[string]Value{
+				"bool":   NewValue(Bool, true),
+				"number": NewValue(Number, big.NewFloat(0)),
+			}),
+			typ: Object{
+				AttributeTypes: map[string]Type{
+					"bool":   Bool,
+					"number": Number,
+				},
+			},
+			json: `{"bool":true,"number":0,"unknown":"whatever"}`,
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			val, err := ValueFromJSONWithOpts([]byte(test.json), test.typ, ValueFromJSONOpts{
+				IgnoreUndefinedAttributes: true,
+			})
 			if err != nil {
 				t.Fatalf("unexpected error unmarshaling: %s", err)
 			}

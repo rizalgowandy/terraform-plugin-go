@@ -1,6 +1,80 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package tftypes
 
-import "testing"
+import (
+	"encoding/json"
+	"errors"
+	"testing"
+	"unicode/utf8"
+
+	"github.com/google/go-cmp/cmp"
+)
+
+func TestObjectApplyTerraform5AttributePathStep(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		object        Object
+		step          AttributePathStep
+		expectedType  interface{}
+		expectedError error
+	}{
+		"AttributeName-no-AttributeTypes": {
+			object:        Object{},
+			step:          AttributeName("test"),
+			expectedType:  nil,
+			expectedError: ErrInvalidStep,
+		},
+		"AttributeName-AttributeTypes-found": {
+			object:        Object{AttributeTypes: map[string]Type{"test": String}},
+			step:          AttributeName("test"),
+			expectedType:  String,
+			expectedError: nil,
+		},
+		"AttributeName-AttributeTypes-not-found": {
+			object:        Object{AttributeTypes: map[string]Type{"other": String}},
+			step:          AttributeName("test"),
+			expectedType:  nil,
+			expectedError: ErrInvalidStep,
+		},
+		"ElementKeyInt": {
+			object:        Object{},
+			step:          ElementKeyInt(123),
+			expectedType:  nil,
+			expectedError: ErrInvalidStep,
+		},
+		"ElementKeyString": {
+			object:        Object{},
+			step:          ElementKeyString("test"),
+			expectedType:  nil,
+			expectedError: ErrInvalidStep,
+		},
+		"ElementKeyValue": {
+			object:        Object{},
+			step:          ElementKeyValue(NewValue(String, "test")),
+			expectedType:  nil,
+			expectedError: ErrInvalidStep,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := testCase.object.ApplyTerraform5AttributePathStep(testCase.step)
+
+			if !errors.Is(err, testCase.expectedError) {
+				t.Errorf("expected error %q, got %s", testCase.expectedError, err)
+			}
+
+			if diff := cmp.Diff(got, testCase.expectedType); diff != "" {
+				t.Errorf("unexpected difference: %s", diff)
+			}
+		})
+	}
+}
 
 func TestObjectEqual(t *testing.T) {
 	t.Parallel()
@@ -164,7 +238,6 @@ func TestObjectEqual(t *testing.T) {
 		},
 	}
 	for name, tc := range tests {
-		name, tc := name, tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -360,7 +433,6 @@ func TestObjectIs(t *testing.T) {
 		},
 	}
 	for name, tc := range tests {
-		name, tc := name, tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -548,7 +620,6 @@ func TestObjectUsableAs(t *testing.T) {
 		},
 	}
 	for name, tc := range tests {
-		name, tc := name, tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -577,4 +648,50 @@ func TestObjectUsableAs(t *testing.T) {
 			}
 		})
 	}
+}
+
+func FuzzMarshalJSONObjectAttributeName(f *testing.F) {
+	// NOTE: Seed comments are placed above due to incorrect go fmt alignment
+	// behavior when mixing single and multiple byte characters.
+	seeds := []string{
+		"ASCII",
+		"こんにちは",
+		// "ﬄ" is a single-character ligature
+		"baﬄe",
+		// These "e" have multiple combining diacritics
+		"wé́́é́́é́́!",
+		// Astral-plane characters
+		"😸😾",
+		// neither byte is valid UTF-8
+		"\xff\xff",
+		// invalid bytes interleaved with single byte characters
+		"t\xffe\xffst",
+		// invalid bytes interleaved with multiple byte sequences
+		"\xffこんにちは\xffこんにちは",
+	}
+
+	for _, seed := range seeds {
+		f.Add(seed)
+	}
+
+	f.Fuzz(func(t *testing.T, name string) {
+		got := marshalJSONObjectAttributeName(name)
+
+		// The result should always unmarshal to the same string, when given
+		// valid UTF-8. This function is not and should not be concerned with
+		// validating the given input.
+		if !utf8.ValidString(name) {
+			return
+		}
+
+		var unmarshaled string
+
+		if err := json.Unmarshal(got, &unmarshaled); err != nil {
+			t.Fatalf("failed to unmarshal: %s", err)
+		}
+
+		if unmarshaled != name {
+			t.Fatalf("expected %q, got %q", name, unmarshaled)
+		}
+	})
 }

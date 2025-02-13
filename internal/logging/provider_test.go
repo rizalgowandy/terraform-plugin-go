@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package logging
 
 import "testing"
@@ -24,8 +27,6 @@ func TestProviderLoggerName(t *testing.T) {
 	}
 
 	for name, testCase := range testCases {
-		testCase := testCase
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 

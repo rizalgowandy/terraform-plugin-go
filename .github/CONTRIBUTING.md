@@ -112,6 +112,8 @@ attaching use cases to an issue first before raising a pull request.
 
 - [ ] **Changelog**: Refer to the [changelog](#changelog) section for more information about how to create changelog entries.
 
+- [ ] **License Headers**: All source code requires a license header at the top of the file, refer to [License Headers](#license-headers) for information on how to autogenerate these headers.
+
 ### Cosmetic changes, code formatting, and typos
 
 In general we do not accept PRs containing only the following changes:
@@ -128,7 +130,7 @@ maintainers must attend to.
 
 #### Exceptions
 
-We belive that one should "leave the campsite cleaner than you found it", so
+We believe that one should "leave the campsite cleaner than you found it", so
 you are welcome to clean up cosmetic issues in the neighbourhood when
 submitting a patch that makes functional changes or fixes.
 
@@ -138,29 +140,26 @@ Dependency management is performed by [dependabot](https://docs.github.com/en/co
 
 ### Changelog
 
-HashiCorp’s open-source projects have always maintained user-friendly, readable CHANGELOGs that allow practitioners and developers to tell at a glance whether a release should have any effect on them, and to gauge the risk of an upgrade. We use the [go-changelog](https://github.com/hashicorp/go-changelog) to generate and update the changelog from files created in the `.changelog/` directory.
+HashiCorp’s open-source projects have always maintained user-friendly, readable CHANGELOGs that allow practitioners and developers to tell at a glance whether a release should have any effect on them, and to gauge the risk of an upgrade.
 
-#### Changelog Format
+We follow Terraform Plugin
+[changelog specifications](https://www.terraform.io/plugin/sdkv2/best-practices/versioning#changelog-specification).
 
-The changelog format requires an entry in the following format, where HEADER corresponds to the changelog category, and the entry is the changelog entry itself. The entry should be included in a file in the `.changelog` directory with the naming convention `{PR-NUMBER}.txt`. For example, to create a changelog entry for pull request 1234, there should be a file named `.changelog/1234.txt`.
+#### Changie Automation Tool
+This project uses the [Changie](https://changie.dev/) automation tool for changelog automation.
 
-``````markdown
-```release-note:{HEADER}
-{ENTRY}
+To add a new entry to the `CHANGELOG`, install Changie using the following [instructions](https://changie.dev/guide/installation/)
+
+After Changie is installed on your local machine, run:
+```bash
+changie new
 ```
-``````
+and choose a `kind` of change corresponding to the Terraform Plugin [changelog categories](https://developer.hashicorp.com/terraform/plugin/sdkv2/best-practices/versioning#categorization)
 
-If a pull request should contain multiple changelog entries, then multiple blocks can be added to the same changelog file. For example:
+Fill out the body field following the entry format. Changie will then prompt for a Github issue or pull request number.
 
-``````markdown
-```release-note:note
-tfprotov6: The `Old()` function has been deprecated. Any code using `Old()` should be updated to use the new `New()` function instead.
-```
-
-```release-note:enhancement
-tfprotov6: Added `New()` function, which does new and exciting things
-```
-``````
+Repeat this process for any additional changes. The `.yaml` files created in the `.changes/unreleased` folder
+should be pushed the repository along with any code changes.
 
 #### Pull Request Types to CHANGELOG
 
@@ -180,59 +179,110 @@ The CHANGELOG is intended to show developer-impacting changes to the codebase fo
 
 ###### Major Features
 
-A major feature entry should use the `release-note:feature` header.
+A major feature entry should use the `FEATURES` kind.
 
 ``````markdown
-```release-note:feature
 Added `great` package, which solves all the problems
-```
+
 ``````
 
 ###### Bug Fixes
 
-A new bug entry should use the `release-note:bug` header and have a prefix indicating the sub-package it corresponds to, a colon, then followed by a brief summary. Use a `all` prefix should the fix apply to all sub-packages.
+A new bug entry should use the `BUG FIXES` kind and have a prefix indicating the sub-package it corresponds to, a colon, then followed by a brief summary. Use a `all` prefix should the fix apply to all sub-packages.
 
 ``````markdown
-```release-note:bug
-tfprotov6: Prevented potential panic in `Example()` function
-```
+tfsdk: Prevented potential panic in `Example()` function
+
 ``````
 
 ###### Enhancements
 
-A new enhancement entry should use the `release-note:enhancement` header and have a prefix indicating the sub-package it corresponds to, a colon, then followed by a brief summary. Use a `all` prefix for enchancements that apply to all sub-packages.
+A new enhancement entry should use the `ENHANCEMENTS` kind and have a prefix indicating the sub-package it corresponds to, a colon, then followed by a brief summary. Use a `all` prefix for enchancements that apply to all sub-packages.
 
 ``````markdown
-```release-note:enhancement
-tfprotov6: Added `Great` interface for doing great things
-```
+attr: Added `Great` interface for doing great things
+
 ``````
 
 ###### Deprecations
 
-A deprecation entry should use the `release-note:note` header and have a prefix indicating the sub-package it corresponds to, a colon, then followed by a brief summary. Use a `all` prefix for changes that apply to all sub-packages.
+A deprecation entry should use the `NOTES` kind and have a prefix indicating the sub-package it corresponds to, a colon, then followed by a brief summary. Use a `all` prefix for changes that apply to all sub-packages.
 
 ``````markdown
-```release-note:note
-tfprotov6: The `Old()` function is being deprecated in favor of the `New()` function
-```
+diag: The `Old()` function is being deprecated in favor of the `New()` function
+
 ``````
 
 ###### Breaking Changes and Removals
 
-A breaking-change entry should use the `release-note:breaking-change` header and have a prefix indicating the sub-package it corresponds to, a colon, then followed by a brief summary. Use a `all` prefix for changes that apply to all sub-packages.
+A breaking-change entry should use the `BREAKING CHANGES` kind and have a prefix indicating the sub-package it corresponds to, a colon, then followed by a brief summary. Use a `all` prefix for changes that apply to all sub-packages.
 
 ``````markdown
-```release-note:breaking-change
-tfprotov6: The `Example` type `Old` field has been removed since it is not necessary
-```
+tfsdk: The `Example` type `Old` field has been removed since it is not necessary
+
 ``````
+
+### License Headers
+
+All source code files (excluding autogenerated files like `go.mod`, prose, and files excluded in [.copywrite.hcl](../.copywrite.hcl)) must have a license header at the top.
+
+This can be autogenerated by running `make generate` or running `go generate ./...` in the [/tools](../tools) directory.
+
+## Linting
+
+GitHub Actions workflow bug and style checking is performed via [`actionlint`](https://github.com/rhysd/actionlint).
+
+To run the GitHub Actions linters locally, install the `actionlint` tool, and run:
+
+```shell
+actionlint
+```
+
+Go code bug and style checking is performed via [`golangci-lint`](https://golangci-lint.run/).
+
+To run the Go linters locally, install the `golangci-lint` tool, and run:
+
+```shell
+golangci-lint run ./...
+```
 
 ## Testing
 
 Code contributions should be supported by unit tests wherever possible.
 
-### Unit tests
+### GitHub Actions Tests
+
+GitHub Actions workflow testing is performed via [`act`](https://github.com/nektos/act).
+
+To run the GitHub Actions testing locally (setting appropriate event):
+
+```shell
+act --artifact-server-path /tmp --env ACTIONS_RUNTIME_TOKEN=test -P ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest pull_request
+```
+
+The command options can be added to a `~/.actrc` file:
+
+```text
+--artifact-server-path /tmp
+--env ACTIONS_RUNTIME_TOKEN=test
+-P ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest
+```
+
+So they do not need to be specified every invocation:
+
+```shell
+act pull_request
+```
+
+### Go Unit Tests
+
+Go code unit testing is perfomed via Go's built-in testing functionality.
+
+To run the Go unit testing locally:
+
+```shell
+go test ./...
+```
 
 This codebase follows Go conventions for unit testing. Some guidelines include:
 
@@ -255,8 +305,6 @@ func TestExample(t *testing.T) {
         },
     }
     for name, testCase := range testCases {
-        // Do not omit this next line
-        name, testCase := name, testCase
         t.Run(name, func(t *testing.T) {
             t.Parallel()
             // Implement test referencing testCase fields
@@ -271,20 +319,13 @@ This section is dedicated to the maintainers of this project.
 
 ### Releases
 
-Before running a release, the changelog must be constructed from unreleased entries in the `.changelog` directory.
+To cut a release, go to the repository in Github and click on the `Actions` tab.
 
-Install the latest version of the [`changelog-build`](https://pkg.go.dev/github.com/hashicorp/go-changelog/cmd/changelog-build) command, if it not already available:
+Select the `Release` workflow on the left-hand menu.
 
-```shell
-go install github.com/hashicorp/go-changelog/cmd/changelog-build
-```
+Click on the `Run workflow` button.
 
-Run the [`changelog-build`](https://pkg.go.dev/github.com/hashicorp/go-changelog/cmd/changelog-build) command from the root directory of the repository:
+Select the branch to cut the release from (default is main).
 
-```shell
-changelog-build -changelog-template .changelog.tmpl -entries-dir .changelog -last-release $(git describe --tags --abbrev=0) -note-template .changelog-note.tmpl -this-release HEAD
-```
-
-This will generate a section of Markdown text for the next release. Open the `CHANGELOG.md` file, add a `# X.Y.Z (Unreleased)` header as the first line, then add the output from the `changelog-build` command. The `(Unreleased)` suffix after the version number is required for the current release process.
-
-Refer to the HashiCorp internal Engineering documentation for information about completing the release process once the changelog has been prepared.
+Input the `Release version number` which is the Semantic Release number including
+the `v` prefix (i.e. `v1.4.0`) and click `Run workflow` to kickoff the release.

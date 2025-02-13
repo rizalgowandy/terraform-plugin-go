@@ -29,6 +29,12 @@ Providers built on terraform-plugin-go will only be usable with Terraform
 v0.12.0 and later. Developing providers for versions of Terraform below 0.12.0
 is unsupported by the Terraform Plugin SDK team.
 
+## Go Compatibility
+
+This project follows the [support policy](https://golang.org/doc/devel/release.html#policy) of Go as its support policy. The two latest major releases of Go are supported by the project.
+
+Currently, that means Go **1.22** or later must be used when including this project as a dependency.
+
 ## Getting Started
 
 terraform-plugin-go is targeted towards experienced Terraform developers.
@@ -156,6 +162,31 @@ out of scope and should live in a separate module.
 ## Contributing
 
 Please see [`.github/CONTRIBUTING.md`](https://github.com/hashicorp/terraform-plugin-go/blob/main/.github/CONTRIBUTING.md).
+
+### Unit Testing
+
+Run `go test ./...` or `make test` after any changes.
+
+### Linting
+
+Ensure the following tooling is installed:
+
+- [`golangci-lint](https://golangci-lint.run/): Aggregate Go linting tool.
+
+Run `golangci-lint run ./...` or `make lint` after any changes.
+
+### Protocol Updates
+
+Ensure the following tooling is installed:
+
+- [`protoc`](https://github.com/protocolbuffers/protobuf): Protocol Buffers compiler. This isn't Go specific tooling, so follow this [installation guide](https://github.com/protocolbuffers/protobuf#protobuf-compiler-installation)
+  - The Terraform Plugin Protocol uses well-known types (`Timestamp`), so be sure to copy the `include` directory to a folder included in your `PATH` (for example, on MacOS, `/usr/local/include`).
+- [`protoc-gen-go`](https://pkg.go.dev/google.golang.org/protobuf/cmd/protoc-gen-go): Go plugin for Protocol Buffers compiler. Install by running `make tools`
+- [`protoc-gen-go-grpc`](https://pkg.go.dev/google.golang.org/grpc/cmd/protoc-gen-go-grpc): Go gRPC plugin for Protocol Buffers compiler. Install by running `make tools`
+
+The Protocol Buffers definitions can be found in `tfprotov5/internal/tfplugin5` and `tfprotov6/internal/tfplugin6`.
+
+Run `make protoc` to recompile the Protocol Buffers files after any changes.
 
 ## License
 

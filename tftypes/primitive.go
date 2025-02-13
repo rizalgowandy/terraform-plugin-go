@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package tftypes
 
 import (
@@ -37,6 +40,12 @@ type primitive struct {
 	_ []struct{}
 }
 
+// ApplyTerraform5AttributePathStep always returns an ErrInvalidStep error
+// as it is invalid to step into a primitive.
+func (p primitive) ApplyTerraform5AttributePathStep(step AttributePathStep) (interface{}, error) {
+	return nil, ErrInvalidStep
+}
+
 func (p primitive) Equal(o Type) bool {
 	v, ok := o.(primitive)
 	if !ok {
@@ -61,7 +70,7 @@ func (p primitive) UsableAs(t Type) bool {
 }
 
 func (p primitive) String() string {
-	return "tftypes." + string(p.name)
+	return "tftypes." + p.name
 }
 
 func (p primitive) private() {}
@@ -77,7 +86,10 @@ func (p primitive) MarshalJSON() ([]byte, error) {
 	case DynamicPseudoType.name:
 		return []byte(`"dynamic"`), nil
 	}
-	return nil, fmt.Errorf("unknown primitive type %q", p)
+
+	// MarshalJSON should always be error safe and reaching this panic implies
+	// a new primitive type was added that needs to be handled above.
+	panic(fmt.Sprintf("unimplemented tftypes.primitive type: %+v", p))
 }
 
 func (p primitive) supportedGoTypes() []string {

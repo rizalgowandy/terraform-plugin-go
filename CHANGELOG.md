@@ -1,3 +1,271 @@
+## 0.26.0 (January 22, 2025)
+
+BREAKING CHANGES:
+
+* tfprotov5+tfprotov6: `EphemeralResourceServer` interface is now required in `ProviderServer`. Implementations not needing ephemeral resource support can return errors from the `*EphemeralResource` methods. ([#442](https://github.com/hashicorp/terraform-plugin-go/issues/442))
+* tfprotov5+tfprotov6: Removed temporary `ProviderServerWithEphemeralResources` interface type. Use `EphemeralResourceServer` instead. ([#442](https://github.com/hashicorp/terraform-plugin-go/issues/442))
+
+NOTES:
+
+* all: To prevent compilation errors, ensure your Go module is updated to at least terraform-plugin-framework@v1.13.0, terraform-plugin-mux@v0.17.0, terraform-plugin-sdk/v2@v2.35.0, and terraform-plugin-testing@v1.11.0 before upgrading this dependency. ([#442](https://github.com/hashicorp/terraform-plugin-go/issues/442))
+
+FEATURES:
+
+* tfprotov5+tfprotov6: Upgraded protocols and added types to support write-only attributes ([#462](https://github.com/hashicorp/terraform-plugin-go/issues/462))
+
+## 0.25.0 (October 30, 2024)
+
+NOTES:
+
+* tfprotov5+tfprotov6: An upcoming release will require the `EphemeralResourceServer` implementation as part of `ProviderServer`.  ([#441](https://github.com/hashicorp/terraform-plugin-go/issues/441))
+
+FEATURES:
+
+* tfprotov5+tfprotov6: Upgraded protocols and added types to support the new ephemeral resource type ([#441](https://github.com/hashicorp/terraform-plugin-go/issues/441))
+
+## 0.24.0 (September 18, 2024)
+
+BREAKING CHANGES:
+
+* tfprotov5+tfprotov6: Removed temporary `ResourceServerWithMoveResourceState` interface type. Use `ResourceServer` instead. ([#408](https://github.com/hashicorp/terraform-plugin-go/issues/408))
+
+NOTES:
+
+* all: If using terraform-plugin-mux, it must be upgraded to v0.16.0 or later to prevent compilation errors ([#408](https://github.com/hashicorp/terraform-plugin-go/issues/408))
+* all: This Go module has been updated to Go 1.22 per the [Go support policy](https://go.dev/doc/devel/release#policy). It is recommended to review the [Go 1.22 release notes](https://go.dev/doc/go1.22) before upgrading. Any consumers building on earlier Go versions may experience errors. ([#428](https://github.com/hashicorp/terraform-plugin-go/issues/428))
+
+BUG FIXES:
+
+* logging: Add existing `MoveResourceState` server capability to v5 and v6 logging ([#432](https://github.com/hashicorp/terraform-plugin-go/issues/432))
+
+## 0.23.0 (May 06, 2024)
+
+BREAKING CHANGES:
+
+* tfprotov5+tfprotov6: `FunctionServer` interface is now required in `ProviderServer`. Implementations not needing function support can return errors from the `GetFunctions` and `CallFunction` methods. ([#388](https://github.com/hashicorp/terraform-plugin-go/issues/388))
+* tfprotov5+tfprotov6: `MoveResourceState` method is now required in `ResourceServer`. Implementations not needing move state support can return errors from the `MoveResourceState` method. ([#388](https://github.com/hashicorp/terraform-plugin-go/issues/388))
+
+NOTES:
+
+* all: To prevent compilation errors, ensure your Go module is updated to at least terraform-plugin-framework@v1.6.0, terraform-plugin-mux@v0.15.0, terraform-plugin-sdk/v2@v2.33.0, and terraform-plugin-testing@v1.7.0 before upgrading this dependency. ([#388](https://github.com/hashicorp/terraform-plugin-go/issues/388))
+
+FEATURES:
+
+* tfprotov5+tfprotov6: Upgraded protocols and added types to support deferred actions ([#403](https://github.com/hashicorp/terraform-plugin-go/issues/403))
+
+## 0.22.2 (April 18, 2024)
+
+BUG FIXES:
+
+* tftypes: Large integers are always encoded as msgpack integers rather than float values to ensure the decoded value will not be rounded to 52-bit precision ([#396](https://github.com/hashicorp/terraform-plugin-go/issues/396))
+
+## 0.22.1 (March 11, 2024)
+
+NOTES:
+
+* all: Upgraded google.golang.org/protobuf dependency, which includes a fix for CVE-2024-24786. While the fixed feature is not used in this Go module, this upgrade may silence security vulnerability scanner reports that are based purely on dependency versions. ([#385](https://github.com/hashicorp/terraform-plugin-go/issues/385))
+
+BUG FIXES:
+
+* tftypes: Fixed an edge-case where `(Value).Equal` would panic when comparing two values with underlying `DynamicPseudoType` types and different concrete values. ([#383](https://github.com/hashicorp/terraform-plugin-go/issues/383))
+
+## 0.22.0 (February 22, 2024)
+
+BREAKING CHANGES:
+
+* tfprotov5+tfprotov6: Modified the response returned from the CallFunction RPC, replacing diagnostics with function error ([#380](https://github.com/hashicorp/terraform-plugin-go/issues/380))
+
+NOTES:
+
+* all: This Go module has been updated to Go 1.21 per the [Go support policy](https://go.dev/doc/devel/release#policy). It is recommended to review the [Go 1.21 release notes](https://go.dev/doc/go1.21) before upgrading. Any consumers building on earlier Go versions may experience errors. ([#381](https://github.com/hashicorp/terraform-plugin-go/issues/381))
+* all: If using terraform-plugin-framework, terraform-plugin-mux, or terraform-plugin-sdk, only upgrade this Go module when upgrading those Go modules to terraform-plugin-framework@v1.6.0, terraform-plugin-mux@v0.15.0, and terraform-plugin-sdk/v2@v2.33.0, or greater, respectively ([#380](https://github.com/hashicorp/terraform-plugin-go/issues/380))
+
+## 0.21.0 (January 26, 2024)
+
+NOTES:
+
+* tfprotov5+tfprotov6: An upcoming release will require the MoveResourceState implementation as part of ResourceServer ([#364](https://github.com/hashicorp/terraform-plugin-go/issues/364))
+
+FEATURES:
+
+* tfprotov5+tfprotov6: Upgraded protocols and added types to support the `MoveResourceState` RPC ([#364](https://github.com/hashicorp/terraform-plugin-go/issues/364))
+
+## 0.20.0 (December 14, 2023)
+
+NOTES:
+
+* tfprotov5+tfprotov6: An upcoming release will require the FunctionServer implementation as part of ProviderServer. ([#351](https://github.com/hashicorp/terraform-plugin-go/issues/351))
+* Provider-defined function support is in technical preview and offered without compatibility promises until Terraform 1.8 is generally available. ([#351](https://github.com/hashicorp/terraform-plugin-go/issues/351))
+
+FEATURES:
+
+* tfprotov5+tfprotov6: Upgraded protocols and added types to support provider-defined functions ([#351](https://github.com/hashicorp/terraform-plugin-go/issues/351))
+
+## 0.19.1 (November 15, 2023)
+
+NOTES:
+
+* This release introduces no functional changes. It does however include dependency updates, such as `google.golang.org/grpc`, which address upstream CVEs. ([#324](https://github.com/hashicorp/terraform-plugin-go/issues/324))
+
+## 0.19.0 (September 06, 2023)
+
+NOTES:
+
+* all: If using terraform-plugin-framework, terraform-plugin-mux, or terraform-plugin-sdk, only upgrade this Go module when upgrading those Go modules or you may receive a `missing GetMetadata method` error when compiling ([#310](https://github.com/hashicorp/terraform-plugin-go/issues/310))
+* all: This Go module has been updated to Go 1.20 per the [Go support policy](https://go.dev/doc/devel/release#policy). It is recommended to review the [Go 1.20 release notes](https://go.dev/doc/go1.20) before upgrading. Any consumers building on earlier Go versions may experience errors. ([#321](https://github.com/hashicorp/terraform-plugin-go/issues/321))
+
+FEATURES:
+
+* tfprotov5: Upgraded protocol to 5.4 and implemented `GetMetadata` RPC ([#310](https://github.com/hashicorp/terraform-plugin-go/issues/310))
+* tfprotov6: Upgraded protocol to 6.4 and implemented `GetMetadata` RPC ([#310](https://github.com/hashicorp/terraform-plugin-go/issues/310))
+
+ENHANCEMENTS:
+
+* tfprotov5: Added `ServerCapabilities` type `GetProviderSchemaOptional` field, which when enabled can signal that the provider supports RPC operations without the `GetProviderSchema` RPC being called first ([#310](https://github.com/hashicorp/terraform-plugin-go/issues/310))
+* tfprotov6: Added `ServerCapabilities` type `GetProviderSchemaOptional` field, which when enabled can signal that the provider supports RPC operations without the `GetProviderSchema` RPC being called first ([#310](https://github.com/hashicorp/terraform-plugin-go/issues/310))
+
+## 0.18.0 (July 03, 2023)
+
+ENHANCEMENTS:
+
+* tftypes: Added `AttributePath` type `NextStep()` method, which returns the next step in the path without first copying via `Steps()` ([#307](https://github.com/hashicorp/terraform-plugin-go/issues/307))
+
+BUG FIXES:
+
+* tftypes: Significantly reduced compute and memory usage of `Value` type walking and transformation ([#307](https://github.com/hashicorp/terraform-plugin-go/issues/307))
+* tftypes: Removed unnecessary memory allocations from `AttributePath` type `Equal()`, `LastStep()`, and `WithoutLastStep()` methods ([#307](https://github.com/hashicorp/terraform-plugin-go/issues/307))
+* tftypes: Removed unnecessary memory allocations from `NewValue()` function ([#307](https://github.com/hashicorp/terraform-plugin-go/issues/307))
+
+## 0.17.0 (June 28, 2023)
+
+ENHANCEMENTS:
+
+* tfprotov5: Added `DynamicValue` type `IsNull` method, which enables checking if the value is null without type information and fully decoding underlying data ([#305](https://github.com/hashicorp/terraform-plugin-go/issues/305))
+* tfprotov6: Added `DynamicValue` type `IsNull` method, which enables checking if the value is null without type information and fully decoding underlying data ([#305](https://github.com/hashicorp/terraform-plugin-go/issues/305))
+
+## 0.16.0 (June 16, 2023)
+
+ENHANCEMENTS:
+
+* all: Improved SDK logging performance when messages would be skipped due to configured logging level ([#289](https://github.com/hashicorp/terraform-plugin-go/issues/289))
+
+BUG FIXES:
+
+* tfprotov6/tf6server: Ensure interrupts route to StopProvider RPC ([#301](https://github.com/hashicorp/terraform-plugin-go/issues/301))
+
+## 0.15.0 (March 27, 2023)
+
+NOTES:
+
+* all: This Go module has been updated to Go 1.19 per the [Go support policy](https://go.dev/doc/devel/release#policy). It is recommended to review the [Go 1.19 release notes](https://go.dev/doc/go1.19) before upgrading. Any consumers building on earlier Go versions may experience errors. ([#266](https://github.com/hashicorp/terraform-plugin-go/issues/266))
+
+# 0.14.3 (January 5, 2023)
+
+BUG FIXES:
+
+* tfprotov5/tf5server: Prevented `TF_LOG_SDK_PROTO_DATA_DIR` file overlap by switching from second to millisecond file naming granularity ([#245](https://github.com/hashicorp/terraform-plugin-go/issues/245))
+* tfprotov6/tf6server: Prevented `TF_LOG_SDK_PROTO_DATA_DIR` file overlap by switching from second to millisecond file naming granularity ([#245](https://github.com/hashicorp/terraform-plugin-go/issues/245))
+
+# 0.14.2 (November 22, 2022)
+
+BUG FIXES:
+
+* tfprotov5: Allow diagnostic messages with incorrect UTF-8 encoding to pass through with the invalid sequences replaced with the Unicode Replacement Character. This avoids returning the unhelpful message "string field contains invalid UTF-8" in that case. ([#237](https://github.com/hashicorp/terraform-plugin-go/issues/237))
+* tfprotov6: Allow diagnostic messages with incorrect UTF-8 encoding to pass through with the invalid sequences replaced with the Unicode Replacement Character. This avoids returning the unhelpful message "string field contains invalid UTF-8" in that case. ([#237](https://github.com/hashicorp/terraform-plugin-go/issues/237))
+
+# 0.14.1 (November 8, 2022)
+
+NOTES:
+
+* No expected changes with this Go module's functionality. Contains updates to dependencies such as `google.golang.org/grpc` and `github.com/hashicorp/go-plugin`, which may be beneficial for consumers.
+
+# 0.14.0 (August 15, 2022)
+
+NOTES:
+
+* This Go module has been updated to Go 1.18 per the [Go support policy](https://golang.org/doc/devel/release.html#policy). Any consumers building on earlier Go versions may experience errors. ([#219](https://github.com/hashicorp/terraform-plugin-go/issues/219))
+
+ENHANCEMENTS:
+
+* tfprotov5/tf5server: Added resource private state when protocol data output is enabled ([#221](https://github.com/hashicorp/terraform-plugin-go/issues/221))
+* tfprotov6/tf6server: Added resource private state when protocol data output is enabled ([#221](https://github.com/hashicorp/terraform-plugin-go/issues/221))
+
+BUG FIXES:
+
+* tfprotov5/tf5server: Fixed `ApplyResourceChange` request RPC protocol data output to include `PriorState` and `ProviderMeta` fields ([#221](https://github.com/hashicorp/terraform-plugin-go/issues/221))
+* tfprotov6/tf6server: Fixed `ApplyResourceChange` request RPC protocol data output to include `PriorState` and `ProviderMeta` fields ([#221](https://github.com/hashicorp/terraform-plugin-go/issues/221))
+
+# 0.13.0 (July 28, 2022)
+
+ENHANCEMENTS:
+* tfprotov5: Added `RawState` type `UnmarshalWithOpts` method to facilitate configurable behaviour during unmarshalling ([#213](https://github.com/hashicorp/terraform-plugin-go/issues/213))
+* tfprotov6: Added `RawState` type `UnmarshalWithOpts` method to facilitate configurable behaviour during unmarshalling ([#213](https://github.com/hashicorp/terraform-plugin-go/issues/213))
+
+BUG FIXES:
+* tftypes: Clarified `ValueFromJSON` error messaging with object attribute key issues ([#214](https://github.com/hashicorp/terraform-plugin-go/issues/214))
+
+# 0.12.0 (July 15, 2022)
+
+NOTES:
+
+* The underlying `terraform-plugin-log` dependency has been updated to v0.6.0, which includes log filtering support and breaking changes of `With()` to `SetField()` function names. Any provider logging which calls those functions may require updates. ([#209](https://github.com/hashicorp/terraform-plugin-go/issues/209))
+
+# 0.11.0 (July 8, 2022)
+
+FEATURES:
+
+* Added support for protocol version 5.3 and 6.3, which allows providers to opt into the `PlanResourceChange` RPC for resource destruction ([#205](https://github.com/hashicorp/terraform-plugin-go/issues/205))
+
+ENHANCEMENTS:
+
+* tfprotov5: Added `ServerCapabilities` type and `ServerCapabilities` field to `GetProviderSchemaResponse` ([#205](https://github.com/hashicorp/terraform-plugin-go/issues/205))
+* tfprotov6: Added `ServerCapabilities` type and `ServerCapabilities` field to `GetProviderSchemaResponse` ([#205](https://github.com/hashicorp/terraform-plugin-go/issues/205))
+
+# 0.10.0 (July 5, 2022)
+
+ENHANCEMENTS:
+
+* tfprotov5/tf5server: Added downstream RPC request duration and response diagnostics logging ([#203](https://github.com/hashicorp/terraform-plugin-go/issues/203))
+* tfprotov6/tf6server: Added downstream RPC request duration and response diagnostics logging ([#203](https://github.com/hashicorp/terraform-plugin-go/issues/203))
+
+# 0.9.1 (May 12, 2022)
+
+BUG FIXES:
+* tftypes: Prevented loss of number precision with integers between 54 and 64 bits ([#190](https://github.com/hashicorp/terraform-plugin-go/issues/190))
+
+# 0.9.0 (April 13, 2022)
+
+NOTES:
+
+* This Go module has been updated to Go 1.17 per the [Go support policy](https://golang.org/doc/devel/release.html#policy). Any consumers building on earlier Go versions may experience errors. ([#175](https://github.com/hashicorp/terraform-plugin-go/issues/175))
+
+ENHANCEMENTS:
+
+* tftypes: Added `Type` support to `WalkAttributePath()` function ([#163](https://github.com/hashicorp/terraform-plugin-go/issues/163))
+
+BUG FIXES:
+
+* tfprotov5/tf5server: Ensured `@caller` in protocol logging entries accurately reflected calling code location ([#179](https://github.com/hashicorp/terraform-plugin-go/issues/179))
+* tfprotov6/tf6server: Ensured `@caller` in protocol logging entries accurately reflected calling code location ([#179](https://github.com/hashicorp/terraform-plugin-go/issues/179))
+
+# 0.8.0 (March 10, 2022)
+
+NOTES:
+
+* The underlying `terraform-plugin-log` dependency has been updated to v0.3.0, which includes a breaking change in the optional additional fields parameter of logging function calls to ensure correctness and catch coding errors during compilation. Any early adopter provider logging which calls those functions may require updates. ([#166](https://github.com/hashicorp/terraform-plugin-go/issues/166))
+
+ENHANCEMENTS:
+
+* tfprotov5: Added `ValueType()` methods to `Schema`, `SchemaAttribute`, `SchemaBlock`, and `SchemaNestedBlock` types. ([#158](https://github.com/hashicorp/terraform-plugin-go/issues/158))
+* tfprotov6: Added `ValueType()` methods to `Schema`, `SchemaAttribute`, `SchemaBlock`, `SchemaNestedBlock`, and `SchemaObject` types. ([#158](https://github.com/hashicorp/terraform-plugin-go/issues/158))
+
+# 0.7.1
+
+BUG FIXES:
+
+* tfprotov5/tf5server: Ensure server options are passed through on startup ([#153](https://github.com/hashicorp/terraform-plugin-go/issues/153))
+* tfprotov5/tf5server: Prevent empty provider address error logs on startup ([#150](https://github.com/hashicorp/terraform-plugin-go/issues/150))
+
 # 0.7.0 (January 20, 2022)
 
 BREAKING CHANGES:

@@ -1,6 +1,84 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package tftypes
 
-import "testing"
+import (
+	"errors"
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
+)
+
+func TestTupleApplyTerraform5AttributePathStep(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		tuple         Tuple
+		step          AttributePathStep
+		expectedType  interface{}
+		expectedError error
+	}{
+		"AttributeName": {
+			tuple:         Tuple{},
+			step:          AttributeName("test"),
+			expectedType:  nil,
+			expectedError: ErrInvalidStep,
+		},
+		"ElementKeyInt-no-ElementTypes": {
+			tuple:         Tuple{},
+			step:          ElementKeyInt(123),
+			expectedType:  nil,
+			expectedError: ErrInvalidStep,
+		},
+		"ElementKeyInt-ElementTypes-found": {
+			tuple:         Tuple{ElementTypes: []Type{String}},
+			step:          ElementKeyInt(0),
+			expectedType:  String,
+			expectedError: nil,
+		},
+		"ElementKeyInt-ElementTypes-negative": {
+			tuple:         Tuple{ElementTypes: []Type{String}},
+			step:          ElementKeyInt(-1),
+			expectedType:  nil,
+			expectedError: ErrInvalidStep,
+		},
+		"ElementKeyInt-ElementTypes-overflow": {
+			tuple:         Tuple{ElementTypes: []Type{String}},
+			step:          ElementKeyInt(1),
+			expectedType:  nil,
+			expectedError: ErrInvalidStep,
+		},
+		"ElementKeyString": {
+			tuple:         Tuple{},
+			step:          ElementKeyString("test"),
+			expectedType:  nil,
+			expectedError: ErrInvalidStep,
+		},
+		"ElementKeyValue": {
+			tuple:         Tuple{},
+			step:          ElementKeyValue(NewValue(String, "test")),
+			expectedType:  nil,
+			expectedError: ErrInvalidStep,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := testCase.tuple.ApplyTerraform5AttributePathStep(testCase.step)
+
+			if !errors.Is(err, testCase.expectedError) {
+				t.Errorf("expected error %q, got %s", testCase.expectedError, err)
+			}
+
+			if diff := cmp.Diff(got, testCase.expectedType); diff != "" {
+				t.Errorf("unexpected difference: %s", diff)
+			}
+		})
+	}
+}
 
 func TestTupleEqual(t *testing.T) {
 	t.Parallel()
@@ -69,7 +147,6 @@ func TestTupleEqual(t *testing.T) {
 		},
 	}
 	for name, tc := range tests {
-		name, tc := name, tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -161,7 +238,6 @@ func TestTupleIs(t *testing.T) {
 		},
 	}
 	for name, tc := range tests {
-		name, tc := name, tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -259,7 +335,6 @@ func TestTupleUsableAs(t *testing.T) {
 		},
 	}
 	for name, tc := range tests {
-		name, tc := name, tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 

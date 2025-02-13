@@ -1,6 +1,72 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package tftypes
 
-import "testing"
+import (
+	"errors"
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
+)
+
+func TestMapApplyTerraform5AttributePathStep(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		m             Map
+		step          AttributePathStep
+		expectedType  interface{}
+		expectedError error
+	}{
+		"AttributeName": {
+			m:             Map{},
+			step:          AttributeName("test"),
+			expectedType:  nil,
+			expectedError: ErrInvalidStep,
+		},
+		"ElementKeyInt": {
+			m:             Map{},
+			step:          ElementKeyInt(123),
+			expectedType:  nil,
+			expectedError: ErrInvalidStep,
+		},
+		"ElementKeyString-no-ElementType": {
+			m:             Map{},
+			step:          ElementKeyString("test"),
+			expectedType:  nil,
+			expectedError: nil,
+		},
+		"ElementKeyString-ElementType": {
+			m:             Map{ElementType: String},
+			step:          ElementKeyString("test"),
+			expectedType:  String,
+			expectedError: nil,
+		},
+		"ElementKeyValue": {
+			m:             Map{},
+			step:          ElementKeyValue(NewValue(String, "test")),
+			expectedType:  nil,
+			expectedError: ErrInvalidStep,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := testCase.m.ApplyTerraform5AttributePathStep(testCase.step)
+
+			if !errors.Is(err, testCase.expectedError) {
+				t.Errorf("expected error %q, got %s", testCase.expectedError, err)
+			}
+
+			if diff := cmp.Diff(got, testCase.expectedType); diff != "" {
+				t.Errorf("unexpected difference: %s", diff)
+			}
+		})
+	}
+}
 
 func TestMapEqual(t *testing.T) {
 	t.Parallel()
@@ -64,7 +130,6 @@ func TestMapEqual(t *testing.T) {
 		},
 	}
 	for name, tc := range tests {
-		name, tc := name, tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -151,7 +216,6 @@ func TestMapIs(t *testing.T) {
 		},
 	}
 	for name, tc := range tests {
-		name, tc := name, tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -244,7 +308,6 @@ func TestMapUsableAs(t *testing.T) {
 		},
 	}
 	for name, tc := range tests {
-		name, tc := name, tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 

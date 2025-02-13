@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package tftypes
 
 import (
@@ -412,7 +415,6 @@ func TestValueDiffEqual(t *testing.T) {
 		},
 	}
 	for name, test := range tests {
-		name, test := name, test
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			isEqual := test.diff1.Equal(test.diff2)
@@ -556,7 +558,6 @@ func TestValueDiffDiff(t *testing.T) {
 		},
 	}
 	for name, test := range tests {
-		name, test := name, test
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
